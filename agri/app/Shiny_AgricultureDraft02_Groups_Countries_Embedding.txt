@@ -1,0 +1,1301 @@
+library(tidyverse)
+library(shiny)
+library(janitor)
+library(ggplot2)
+library(DT)
+library(ggthemes)
+library(stringr)
+library(shinythemes)
+
+
+# library(purrr)
+# library(DT)
+
+# Sorted data
+# AgriIncome <- read_csv("https://sanktpetriskole.maps.arcgis.com/sharing/rest/content/items/c731d19518bc4435ae58f6ec381968f8/data")
+# AgriRegion <- read_csv("https://sanktpetriskole.maps.arcgis.com/sharing/rest/content/items/b9b90ec8b1a64cb4949aabe512fd78c8/data")
+# AgriCountry <- read_csv("https://sanktpetriskole.maps.arcgis.com/sharing/rest/content/items/558254b750e24419b9ec321bde87eaae/data")
+
+# AgriIncome = NULL
+# AgriRegion = NULL
+# AgriCountry = NULL
+
+AgriIncome <- read_csv("AgriIncome.csv")
+AgriRegion <- read_csv("AgriRegion.csv")
+AgriCountry <- read_csv("AgriCountry.csv")
+
+# View(AgriRegion)
+  
+# write.csv(AgriIncome, "AgriIncome.csv")
+# write.csv(AgriRegion, "AgriRegion.csv")
+# write.csv(AgriCountry, "AgriCountry.csv")
+
+# # Energy <- read_csv("1_RawData/EnergyReduced.csv")
+# AgriIncome <- read_csv("https://sanktpetriskole.maps.arcgis.com/sharing/rest/content/items/abd9dbc095b14cc2b6a8c58178146f34/data")
+# AgriRegion <- read_csv("https://sanktpetriskole.maps.arcgis.com/sharing/rest/content/items/42da455c4f6446c78e241b1ea4a37f34/data")
+
+# NoNAs
+# AgriIncome <- read_csv("https://sanktpetriskole.maps.arcgis.com/sharing/rest/content/items/c406ad28dbde4c23a8984cbaf07418e1/data")
+# AgriRegion <- read_csv("https://sanktpetriskole.maps.arcgis.com/sharing/rest/content/items/e5194157abc3436fb1467ce0d60b35bc/data")
+
+
+# Income groups
+AgriIncome = AgriIncome[,-2]
+# View(AgriIncome)
+
+AgriIncome[,2] = round(AgriIncome[,2],0)
+AgriIncome[,3:19] = round(AgriIncome[,3:19],1)
+
+glimpse(AgriIncome)
+names(AgriIncome)[1] = "Income Group"
+# names(AgriIncome)[2] = "Year"
+
+colabels1 = names(AgriIncome)
+
+AgriIncome[,1] = lapply(AgriIncome[,1], as.factor)
+AgriIncome[,3:19] = lapply(AgriIncome[,3:19], as.numeric)
+
+summary(AgriIncome)
+
+# Reformat to snake case
+AgriIncome <- AgriIncome %>%  
+  clean_names("lower_camel")  #  vs. snake
+
+names(AgriIncome)
+
+AgriIncome = AgriIncome %>%
+  mutate(incomeGroup = fct_relevel(incomeGroup, "Low income", 
+                                   "Lower middle income", 
+                                   "Upper middle income",
+                                   "High income"))
+
+# Regions
+
+# Income groups
+AgriRegion = AgriRegion[,-2]
+
+AgriRegion[,2] = round(AgriRegion[,2],0)
+AgriRegion[,3:19] = round(AgriRegion[,3:19],1)
+
+head(AgriRegion)
+
+glimpse(AgriRegion)
+names(AgriRegion)[1] = "World Region"
+# names(AgriRegion)[2] = "Year"
+
+colabels2 = names(AgriRegion)
+
+AgriRegion[,1] = lapply(AgriRegion[,1], as.factor)
+AgriRegion[,3:19] = lapply(AgriRegion[,3:19], as.numeric)
+
+summary(AgriRegion)
+
+# Reformat to snake case
+AgriRegion <- AgriRegion %>%  
+  clean_names("lower_camel")  #  vs. snake
+
+names(AgriRegion)
+
+#######
+# Country data - 1:5 - 6: 17 - 18:23
+
+# View(AgriCountry)
+names(AgriCountry)
+
+# Income groups
+AgriCountry = AgriCountry[,-2]
+# View(AgriCountry)
+
+AgriCountry[,4] = round(AgriCountry[,4],0)
+
+AgriCountry = AgriCountry %>%  select(-24:-25)
+
+
+AgriCountry[,5:34] = round(AgriCountry[,5:34],1)
+
+dim(AgriCountry)
+
+summary(AgriCountry)
+names(AgriCountry)
+
+glimpse(AgriCountry)
+names(AgriCountry)[3] = "World Region"
+# names(AgriCountry)[2] = "Year"
+
+colabels3 = names(AgriCountry)
+
+AgriCountry[,1:3] = lapply(AgriCountry[,1:3], as.factor)
+AgriCountry[,5:34] = lapply(AgriCountry[,5:34], as.numeric)
+
+summary(AgriCountry)
+
+# Reformat to snake case
+AgriCountry <- AgriCountry %>%  
+  clean_names("lower_camel")  #  vs. snake
+
+names(AgriCountry)
+
+AgriCountry = AgriCountry %>%
+  mutate(incomeGroup = fct_relevel(incomeGroup, "Low income", 
+                                   "Lower middle income", 
+                                   "Upper middle income",
+                                   "High income"))
+AgriCountry = AgriCountry %>%
+  filter(!(is.na(incomeGroup)))
+
+# AgriRegion = AgriRegion %>%
+#   mutate(RegionGroup = fct_relevel(RegionGroup, "Low Region", 
+#                                    "Lower middle Region", 
+#                                    "Upper middle Region",
+#                                    "High Region"))
+# 
+
+
+
+# Define more GLOBAL VARIABLES for use in EXPLANATORY TEXTS on the sidebar of TAB X!
+
+# min_date <- min(movies$thtr_rel_date)
+# max_date <- max(movies$thtr_rel_date)
+
+# Start of SIDE PANEL of TAB X
+
+# Explanatory text
+
+# HTML(paste0("Movies released between the following dates will be plotted. 
+#             Pick dates between ", min_date, " and ", max_date, ".")),
+
+
+
+
+
+ui <- fluidPage(theme = shinytheme("lumen"),
+  
+  tabsetPanel(type = "tabs",
+              id = "tabsetpanel",
+              
+              # tab0          
+              tabPanel(title = "About this App", 
+                       
+                       
+                       # Application title
+                       titlePanel(h3(tags$b("Sustainable Agriculture in the World (Source: WB)")),
+                                  windowTitle = ("Sustainable Agriculture")),
+                       
+                       # h4(em("Source: WB")),
+                       
+                       hr(), 
+                       
+                       
+                       sidebarLayout(
+                         
+                         sidebarPanel(offset = 1,
+                                      h3(strong("Instructions")),
+                                      p(h4(em("This part of the panel is where you change the inputs to visualize your: "))),
+                                      
+                                      radioButtons("button", "", choices = c("Plots", "Tables"), selected = "Plots"),
+                                      
+                                      
+                                      conditionalPanel(
+                                        condition = "input.button == 'Plots'",
+                                        plotOutput("plot0", height = 270, width = 370)
+                                      ),
+                                      
+                                      conditionalPanel(
+                                        condition =  "input.button == 'Tables'",
+                                        tableOutput("table0")
+                                      ),
+                                      
+                                      # img(src = "rstudio.png", height = 140, width = 200),
+                                      
+                                      h5("This App was made using Shiny, a product of ", 
+                                         span("RStudio", style = "color:blue"))
+                         ),
+                         
+                         mainPanel(width = 7, 
+                                   
+                                   h3(strong("Introduction to this App")),
+                                   p(h4("This App helps you visualize for world regions a few trends for:")),
+                                   p(h4(em(strong("1. Agricultural production and yield ")))),
+                                   p(h4(em(strong("2. Rural and urban population growths")))),
+                                   p(h4(em(strong("3. Land area and use ")))), 
+                                   p(h4("in a ", em("handy way"), 
+                                        "and to interact with different dimensions of the data.")),
+                                   br(),
+                                   # p(h4("For an introduction and live examples, visit the ",
+                                   #   a("Shiny homepage.", 
+                                   #     href = "http://shiny.rstudio.com"))),
+                                   
+                                   h3(strong("Features")),
+                                   p(h4("1. Create beautiful", strong("plots"), "by changing the inputs from the sidepanel on the left.")),
+                                   p(h4("2. Manipulate the", strong("tables"),"by choosing or sorting interesting data from them.")),
+                                   
+                                   br(),br(),
+                                   p(h4("This App helps you answer in particular a few questions raised in this", 
+                                        tags$a(href = "https://docs.google.com/document/d/1YKhh6SIiCaSt-eqQhg7uSVswuTrO2UcCIaib_66_sY4/edit?usp=sharing", 
+                                               "Google Docs.")))
+                                   ))
+                       
+                       
+                       
+              ), 
+              
+              
+              # tab1          
+              tabPanel(title = "Sustainable Agriculture by Income Groups", 
+                       
+                       
+                       # Application title
+                       titlePanel(h3(tags$b("Sustainable Agriculture in the World (Source: WB)"))),
+                       
+                       hr(),
+                       
+                       # Sidebar layout with a input and output definitions
+                       fluidRow(   # sidebarLayout(
+                         
+                         # Inputs(s)
+                         column(2,# sidebarPanel(
+                           
+                           textInput("title1", "Title", "Cereal Yield vs Year"),
+                           
+                           
+                           # Action button for plot title
+                           actionButton(inputId = "update_plot_title1", 
+                                        label = "Update plot title"),
+                           
+                           br(), br(),
+                           # br(), hr(), br(), 
+                           
+                           
+                           
+                           # br(), hr(), br(),
+                           
+                           selectInput("var1", "Select your variable",
+                                       choices = c(# "World Region", "Year",
+                                                   "GDP per capita, PPP (constant 2011 international $)" = "gdpPerCapitaPppConstant2011International",
+                                                   "Agriculture, forestry, and fishing, value added (% of GDP)" = "agricultureForestryAndFishingValueAddedPercentOfGdp",
+                                                   "Rural population (% of total population)" = "ruralPopulationPercentOfTotalPopulation",
+                                                   "Rural population growth (annual %)" = "ruralPopulationGrowthAnnualPercent",
+                                                   "Urban population (% of total)" = "urbanPopulationPercentOfTotal",
+                                                   "Urban population growth (annual %)" = "urbanPopulationGrowthAnnualPercent",
+                                                   "Agricultural land (% of land area)" = "agriculturalLandPercentOfLandArea",
+                                                   "Arable land (% of land area)" = "arableLandPercentOfLandArea",
+                                                   "Forest area (% of land area)" = "forestAreaPercentOfLandArea",
+                                                   "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)" = "agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us",
+                                                   "Cereal yield (kg per hectare)" = "cerealYieldKgPerHectare",
+                                                   "Water productivity, total (constant 2010 US$ GDP per cubic meter of total freshwater withdrawal)" = "waterProductivityTotalConstant2010UsGdpPerCubicMeterOfTotalFreshwaterWithdrawal"),
+                                       selected = "cerealYieldKgPerHectare"),
+                                       
+                                         
+                                         
+                                         # c("Agricultural land (% of land area)" = "agriculturalLandPercentOfLandArea",
+                                         #           "Agriculture, forestry, and fishing, value added (% of GDP)" = "agricultureForestryAndFishingValueAddedPercentOfGdp",
+                                         #           "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)" = "agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us",
+                                         #           "Arable land (% of land area)" = "arableLandPercentOfLandArea",
+                                         #           "Cereal yield (kg per hectare)" = "cerealYieldKgPerHectare",
+                                         #           "Forest area (% of land area)" = "forestAreaPercentOfLandArea",
+                                         #           "GDP per capita, PPP (constant 2011 international $)" = "gdpPerCapitaPppConstant2011International",
+                                         #           "Land under cereal production (hectares)" = "landUnderCerealProductionHectares",
+                                         #           "Rural population (% of total population)" = "ruralPopulationPercentOfTotalPopulation",
+                                         #           "Rural population growth (annual %)" = "ruralPopulationGrowthAnnualPercent",
+                                         #           "Urban population (% of total)" = "urbanPopulationPercentOfTotal",
+                                         #           "Urban population growth (annual %)" = "urbanPopulationGrowthAnnualPercent",
+                                         #           "Water productivity, total (constant 2010 US$ GDP per cubic meter of total freshwater withdrawal)" = "waterProductivityTotalConstant2010UsGdpPerCubicMeterOfTotalFreshwaterWithdrawal"),
+                                         # 
+                                         
+                                         
+                                       
+             
+                           # names(AgriIncome)[3:19]                                         
+                                         
+                                         
+                           # selectInput("incomeGroup1", "Income Group",
+                           #             choices = c(levels(AgriIncome$incomeGroup))),                           
+                           
+                           br(), 
+                           
+                           sliderInput(inputId = "years1", label = "Years",
+                                       min = 2010, 2017,
+                                       value = c(min(AgriIncome$year)+1, 
+                                                 max(AgriIncome$year))),
+                           
+                           br(), 
+                           
+                           # Add a checkbox for line of best fit
+                           checkboxInput("fit1", "Checking for any trend ...", FALSE),
+                         
+                           
+                           br(), 
+                           
+                           # Show data table
+                           checkboxInput(inputId = "show_data1",
+                                         label = "Showing the data table ...",
+                                         value = FALSE),
+                           
+                         hr()), 
+                         
+                         # Output(s)
+                         column(9, # mainPanel(
+                           # Add a plot output
+                           plotOutput("plot1"),
+                           # ... in main panel
+                           textOutput(outputId = "description1")),
+                         
+                         fluidRow(
+                           column(12, 
+                           
+                           conditionalPanel("input.show_data1 == true"),     # , h3("Data table") Third level header: Data table
+                           DT::dataTableOutput(outputId = "table1"))))),
+                           
+                           # DT::dataTableOutput("table1")))),
+                       
+              
+              
+              # tab2
+              tabPanel(title = "Sustainable Agriculture by World Regions", 
+                       
+                       
+                       
+                       # Application title
+                       titlePanel(h3(tags$b("Sustainable Agriculture in the World (Source: WB)"))),
+                       
+                       hr(),
+                       
+                       # Sidebar layout with a input and output definitions
+                       fluidRow(      # sidebarLayout(
+                         
+                         # Inputs(s)
+                         column(2,
+                           
+                           textInput("title2", "Title", "Cereal Yield vs Year"),
+                           
+                           # Action button for plot title
+                           actionButton(inputId = "update_plot_title2", 
+                                        label = "Update plot title"),
+                           
+                           br(), br(),
+                           # hr(), 
+                           
+                           
+                           
+                           
+                           # hr(), 
+                           
+                           # # Add a checkbox for line of best fit
+                           # radioButtons("group", "Filtering by ...", choices("Region" = "region",
+                           #                                                   "Income Group" = "incomeGroup"), 
+                           #              selected = "incomeGroup")),
+                           
+                           selectInput("var2", "Select your variable",
+                                       choices = c(# "World Region", "Year",
+                                                   "GDP per capita, PPP (constant 2011 international $)" = "gdpPerCapitaPppConstant2011International",
+                                                   "Agriculture, forestry, and fishing, value added (% of GDP)" = "agricultureForestryAndFishingValueAddedPercentOfGdp",
+                                                   "Rural population (% of total population)" = "ruralPopulationPercentOfTotalPopulation",
+                                                   "Rural population growth (annual %)" = "ruralPopulationGrowthAnnualPercent",
+                                                   "Urban population (% of total)" = "urbanPopulationPercentOfTotal",
+                                                   "Urban population growth (annual %)" = "urbanPopulationGrowthAnnualPercent",
+                                                   "Agricultural land (% of land area)" = "agriculturalLandPercentOfLandArea",
+                                                   "Arable land (% of land area)" = "arableLandPercentOfLandArea",
+                                                   "Forest area (% of land area)" = "forestAreaPercentOfLandArea",
+                                                   "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)" = "agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us",
+                                                   "Cereal yield (kg per hectare)" = "cerealYieldKgPerHectare",
+                                                   "Water productivity, total (constant 2010 US$ GDP per cubic meter of total freshwater withdrawal)" = "waterProductivityTotalConstant2010UsGdpPerCubicMeterOfTotalFreshwaterWithdrawal"),
+                                       selected = "cerealYieldKgPerHectare"),
+                                       
+                                       
+                                       # choices = c("Agricultural land (% of land area)" = "agriculturalLandPercentOfLandArea",
+                                       #             "Agriculture, forestry, and fishing, value added (% of GDP)" = "agricultureForestryAndFishingValueAddedPercentOfGdp",
+                                       #             "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)" = "agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us",
+                                       #             "Arable land (% of land area)" = "arableLandPercentOfLandArea",
+                                       #             "Cereal yield (kg per hectare)" = "cerealYieldKgPerHectare",
+                                       #             "Forest area (% of land area)" = "forestAreaPercentOfLandArea",
+                                       #             "GDP per capita, PPP (constant 2011 international $)" = "gdpPerCapitaPppConstant2011International",
+                                       #             "Land under cereal production (hectares)" = "landUnderCerealProductionHectares",
+                                       #             "Rural population (% of total population)" = "ruralPopulationPercentOfTotalPopulation",
+                                       #             "Rural population growth (annual %)" = "ruralPopulationGrowthAnnualPercent",
+                                       #             "Urban population (% of total)" = "urbanPopulationPercentOfTotal",
+                                       #             "Urban population growth (annual %)" = "urbanPopulationGrowthAnnualPercent",
+                                       #             "Water productivity, total (constant 2010 US$ GDP per cubic meter of total freshwater withdrawal)" = "waterProductivityTotalConstant2010UsGdpPerCubicMeterOfTotalFreshwaterWithdrawal"),
+                                       # selected = "cerealYieldKgPerHectare"),
+                                       #   
+                                         
+                                         
+                                         # names(AgriRegion)[3:19]), 
+                           # selected = "Cereal yield (kg per hectare)"),
+                           
+                           
+                           # radioButtons("region1", "World Region",
+                           #              choices = c(levels(AgriRegion$worldRegion))),
+                           
+                           
+                           br(),
+                           
+                           sliderInput(inputId = "years2", label = "Years",
+                                       min = 2010, 2017,
+                                       value = c(min(AgriRegion$year)+1, 
+                                                 max(AgriRegion$year))),
+                           
+                           br(),
+                           
+                           # Add a checkbox for line of best fit
+                           checkboxInput("fit2", "Checking for any trend ...", FALSE),
+                           
+                           # Show data table
+                           checkboxInput(inputId = "show_data2",
+                                         label = "Showing the data table ...",
+                                         value = FALSE),
+                         
+                         hr()),
+                         
+                         # Output(s)
+                         column(9,
+                           # Add a plot output
+                           plotOutput("plot2"),
+                           # ... in main panel
+                           textOutput(outputId = "description2"))),
+                         
+                       # column(
+                       #   dataTableOutput(outputId = "table"), width = 6) , 
+                       # width = 10
+                         
+                         fluidRow(
+                           column(width = 10, 
+                           
+                                  conditionalPanel("input.show_data2 == true"),     # , h3("Data table") Third level header: Data table
+                                  DT::dataTableOutput(outputId = "table2")))),
+                            
+                                  
+                           # DT::dataTableOutput("table2")) ))),
+                       
+                       
+                       
+                       # # tab0          
+                       # tabPanel(title = "About this App", 
+                       #          
+                       #          
+                       #          # Application title
+                       #          titlePanel(h3(tags$b("Sustainable Agriculture in the World")),
+                       #                     
+                       
+                    # tab3 - No plot3
+                    tabPanel(title = "Regional Summary Plots", 
+                                
+                                # Application title
+                                titlePanel(h3(tags$b("Sustainable Agriculture in the World (Source: WB)"))),             
+                       
+                             hr(),
+                             
+                             sidebarLayout(
+                         
+                         # Inputs(s)
+                               sidebarPanel(  
+                                # plotOutput("plot41")),
+                                textInput("title4", "Title", "Cereal Yield"),
+                                
+                                
+                                # Action button for plot title
+                                actionButton(inputId = "update_plot_title4", 
+                                             label = "Update plot title"),
+                                
+                                br(), br(),
+                                # br(), hr(), br(), 
+                                
+                                
+                                
+                                # br(), hr(), br(),
+                                
+                                selectInput("var4", "Select your variable",
+                                           choices = c("GDP per capita, PPP (constant 2011 international $)" = "gdpPerCapitaPppConstant2011International",
+                                              "Agriculture, forestry, and fishing, value added (% of GDP)" = "agricultureForestryAndFishingValueAddedPercentOfGdp",
+                                             "Rural population (% of total population)" = "ruralPopulationPercentOfTotalPopulation",
+                                              "Rural population growth (annual %)" = "ruralPopulationGrowthAnnualPercent",
+                                             "Urban population (% of total)" = "urbanPopulationPercentOfTotal",
+                                              "Urban population growth (annual %)" = "urbanPopulationGrowthAnnualPercent",
+                                              "Agricultural land (% of land area)" = "agriculturalLandPercentOfLandArea",
+                                             "Arable land (% of land area)" = "arableLandPercentOfLandArea",
+                                               "Forest area (% of land area)" = "forestAreaPercentOfLandArea",
+                                               "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)" = "agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us",
+                                             "Cereal yield (kg per hectare)" = "cerealYieldKgPerHectare",
+                                               "Water productivity, total (constant 2010 US$ GDP per cubic meter of total freshwater withdrawal)" = "waterProductivityTotalConstant2010UsGdpPerCubicMeterOfTotalFreshwaterWithdrawal"),
+                                             selected = "cerealYieldKgPerHectare"),
+                                 
+                                
+                                # radioButtons("var4", "Select your variable",
+                                #              choices = c("GDP per capita, PPP (constant 2011 international $)" = "gdpPerCapitaPppConstant2011International",
+                                #                          "Agriculture, forestry, and fishing, value added (% of GDP)" = "agricultureForestryAndFishingValueAddedPercentOfGdp",
+                                #                          "Rural population (% of total population)" = "ruralPopulationPercentOfTotalPopulation",
+                                #                          "Rural population growth (annual %)" = "ruralPopulationGrowthAnnualPercent",
+                                #                          "Urban population (% of total)" = "urbanPopulationPercentOfTotal",
+                                #                          "Urban population growth (annual %)" = "urbanPopulationGrowthAnnualPercent",
+                                #                          "Agricultural land (% of land area)" = "agriculturalLandPercentOfLandArea",
+                                #                          "Arable land (% of land area)" = "arableLandPercentOfLandArea",
+                                #                          "Forest area (% of land area)" = "forestAreaPercentOfLandArea",
+                                #                          "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)" = "agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us",
+                                #                          "Cereal yield (kg per hectare)" = "cerealYieldKgPerHectare",
+                                #                          "Water productivity, total (constant 2010 US$ GDP per cubic meter of total freshwater withdrawal)" = "waterProductivityTotalConstant2010UsGdpPerCubicMeterOfTotalFreshwaterWithdrawal"),
+                                #              selected = "cerealYieldKgPerHectare"),      
+                                # 
+                               #  choices = c(
+                               #  "gdpPerCapitaPppConstant2011International" ,                                      
+                               # "gdpPppConstant2011International"  ,                                              
+                               #  "landUnderCerealProductionHectares"   ,                                           
+                               #  "permanentCroplandPercentOfLandArea"     ,                                        
+                               #  "ruralPopulationPercentOfTotalPopulation"   ,                                     
+                               #  "ruralPopulationGrowthAnnualPercent")
+                                
+                                
+                                
+                                
+                                hr(),
+                                tableOutput(outputId = "tableX")),
+                                
+                         
+                                mainPanel(
+                                  
+                                plotOutput("plot41"),  # plotOutput("plot42")) 
+                         
+                      
+                       
+                       
+                               plotOutput("plot42")))),
+              
+              
+              # tab4
+              tabPanel(title = "Regional Distribution by Income Group", 
+                       
+                       
+                       
+                       # Application title
+                       titlePanel(h3(tags$b("Sustainable Agriculture in the World (Source: WB)"))),
+                       
+                       hr(),
+                       
+                       # Sidebar layout with a input and output definitions
+                       fluidRow(
+                         
+                         # Inputs(s)
+                         column(2, # offset = 0.5,
+                                
+                                # br(), 
+                                
+                                textInput("title5", "Title", "Cereal Yield"),
+                                
+                                br(), 
+                                
+                                actionButton(inputId = "update_plot_title5", 
+                                             label = "Update plot title"),
+                                
+                                br(), br(), br(),
+                                
+                                selectInput("var5", "Select your variable",
+                                             choices = c("GDP per capita, PPP (constant 2011 international $)" = "gdpPerCapitaPppConstant2011International",
+                                                         "Agriculture, forestry, and fishing, value added (% of GDP)" = "agricultureForestryAndFishingValueAddedPercentOfGdp",
+                                                         "Rural population (% of total population)" = "ruralPopulationPercentOfTotalPopulation",
+                                                         "Rural population growth (annual %)" = "ruralPopulationGrowthAnnualPercent",
+                                                         "Urban population (% of total)" = "urbanPopulationPercentOfTotal",
+                                                         "Urban population growth (annual %)" = "urbanPopulationGrowthAnnualPercent",
+                                                         "Agricultural land (% of land area)" = "agriculturalLandPercentOfLandArea",
+                                                         "Arable land (% of land area)" = "arableLandPercentOfLandArea",
+                                                         "Forest area (% of land area)" = "forestAreaPercentOfLandArea",
+                                                         "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)" = "agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us",
+                                                         "Cereal yield (kg per hectare)" = "cerealYieldKgPerHectare",
+                                                         "Water productivity, total (constant 2010 US$ GDP per cubic meter of total freshwater withdrawal)" = "waterProductivityTotalConstant2010UsGdpPerCubicMeterOfTotalFreshwaterWithdrawal"),
+                                             selected = "cerealYieldKgPerHectare"),
+                            
+                                
+                                # Add a checkbox for line of best fit
+                                selectInput("region", "Distribution for ...", 
+                                            choices = c("All Countries", levels(AgriCountry$worldRegion)[-8]), #"All", 
+                                            selected = "All Countries"),
+                                
+                                
+                                br(),
+                                
+                                
+                                # Set alpha level
+                                sliderInput(inputId = "alpha", 
+                                            label = "Transparency", 
+                                            min = 0, max = 1, 
+                                            value = 0.5)),
+                         br(), br(), 
+                         
+                         # Summary Table Output(s)
+                         
+                         # column(6, offset = 1, 
+                         #        # Add a plot output
+                         #        
+                         #        h3("Summary Statistics"),
+                         #        tableOutput(outputId = "table5"), # DT::dataTableOutput(outputId = "table5"),
+                         #        br()),
+                         # hr(), br()), 
+                       
+                       
+                       # fluidRow(
+                         
+                         # Inputs(s)
+                         column(10, # offset = 6,  
+                                plotOutput("plot51", height = 500)))), # ))
+ 
+              
+              # tab4
+              navbarMenu(title = "Web-Apps from ArcGIS",
+                         
+                         
+                         
+                         
+                         tabPanel(title = "Income Vs population Growth", 
+                                  
+                                  
+                                  # Application title
+                                  titlePanel(h3(tags$b("Sustainable Agriculture in the World (Source: WB)"))),
+                                  
+                                  
+                                  hr(), 
+                                  
+                                  # p(h4(em(strong("Click on the Globus or the blue link to open the ", em("Income Vs population Growth"), 
+                                  #             "WebApp.")))),
+                                  # 
+                                  
+                                  p(h4(em("Click on the Globus or the blue link to open the "), strong("Income Vs population Growth"), 
+                                       em("WebApp."))),
+                                  
+                                  br(), br(), br(), br(), br(),
+                                  # Sidebar layout with a input and output definitions
+                                  # fluidRow(   # sidebarLayout(
+                                  
+                                  fluidRow(
+                                    # tags$iframe(
+                                    #   seamless = "seamless", 
+                                    #   src = "https://sanktpetriskole.maps.arcgis.com/apps/StorytellingSwipe/index.html?appid=20d5f93f17164550ba2070a819107bce", 
+                                    #   width="500" , height="400" # height = 800, width = 1400
+                                    # )
+                                    
+                                    #   tags$div(
+                                    #     HTML("<iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"
+                                    # src="https://sanktpetriskole.maps.arcgis.com/apps/StorytellingSwipe/index.html?appid=20d5f93f17164550ba2070a819107bce"></iframe>")
+                                    #   # ))
+                                    
+                                    #                        
+                                    #                        tags$div(
+                                    #                          HTML('<iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" 
+                                    # src="https://arcgis.com/home/item.html?id=4d7f7ef2519045d9ba52cd7e6f71bce0#settings"></iframe>'))
+                                    
+                                    
+                                    tags$div(
+                                      HTML('<blockquote class="embedly-card"><h4><a href="https://sanktpetriskole.maps.arcgis.com/apps/StorytellingSwipe/index.html?appid=b6b2014080e2454eb8f25561552c9299">Story Map Swipe and Spyglass</a></h4><p>This story map was created with the Esri Story Map Swipe and Spyglass application in ArcGIS Online.</p></blockquote>
+                                           <script async src="//cdn.embedly.com/widgets/platform.js" charset="UTF-8"></script>')))),
+                         
+                         # html(<iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"
+                         # # src="https://sanktpetriskole.maps.arcgis.com/home/item.html?id=4d7f7ef2519045d9ba52cd7e6f71bce0#settings"></iframe>
+                         # )   
+                         
+                         
+                         tabPanel(title = "Income Vs Workforce in Agriculture", 
+                                  
+                                  
+                                  # Application title
+                                  titlePanel(h3(tags$b("Sustainable Agriculture in the World (Source: WB)"))),
+                                  
+                                  
+                                  hr(), 
+                                  
+                                  # p(h4(em(strong("Click on the Globus or the blue link to open the ", em("Income Vs Workforce in Agriculture"), 
+                                  #             "WebApp.")))),
+                                  # 
+                                  p(h4(em("Click on the Globus or the blue link to open the "), strong("Income Vs Workforce in Agriculture"), 
+                                       em("WebApp."))),
+                                  
+                                  br(), br(), br(), br(), br(),
+                                  
+                                  
+                                  fluidRow(
+                                    
+                                    
+                                    tags$div(
+                                      HTML('<blockquote class="embedly-card"><h4><a href="https://sanktpetriskole.maps.arcgis.com/apps/StorytellingSwipe/index.html?appid=7518c8a0923f49f0856c90864eefe8f1">Story Map Swipe and Spyglass</a></h4><p>This story map was created with the Esri Story Map Swipe and Spyglass application in ArcGIS Online.</p></blockquote><script async src="//cdn.embedly.com/widgets/platform.js" charset="UTF-8"></script>')))),
+                         
+ # )))))
+                         
+                         tabPanel(title = "Population Growth Vs Water Withdrawal", 
+                                  
+                                  
+                                  # Application title
+                                  titlePanel(h3(tags$b("Sustainable Agriculture in the World (Source: WB)"))),
+                                  
+                                  
+                                  hr(), 
+                                  
+                                  p(h4(em("Click on the Globus or the blue link to open the "), strong(" Population Growth Vs Water Withdrawal"), 
+                                              em("WebApp."))),
+                                  
+                                  
+                                  br(), br(), br(), br(), br(),
+                                  
+                                  
+                                  fluidRow(
+                                    
+                                    
+                                    tags$div(
+                                      HTML('<blockquote class="embedly-card"><h4><a href="https://sanktpetriskole.maps.arcgis.com/apps/StorytellingSwipe/index.html?appid=74ed87cea73145ee9c691c5a888bcc05">Story Map Swipe and Spyglass</a></h4><p>This story map was created with the Esri Story Map Swipe and Spyglass application in ArcGIS Online.</p></blockquote><script async src="//cdn.embedly.com/widgets/platform.js" charset="UTF-8"></script>'))))
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                        
+              
+ 
+              
+                          
+  )))
+              
+              
+               # tags$div(
+              #   HTML('<style>.embed-container {position: relative; padding-bottom: 80%; height: 0; max-width: 100%;} .embed-container iframe, .embed-container object, .embed-container iframe{position: absolute; top: 0; left: 0; width: 100%; height: 100%;} small{position: absolute; z-index: 40; bottom: 0; margin-bottom: -15px;}</style><div class="embed-container"><iframe width="500" height="400" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" title="7A. World Energy Consumption and CO2-emissions" src="//sanktpetriskole.maps.arcgis.com/apps/Embed/index.html?webmap=e7010cd20bfa41daa2fdb97b181e615f&extent=-172.2656,-47.8749,172.2656,75.6276&zoom=true&previewImage=false&scale=true&disable_scroll=true&theme=light"></iframe></div>')))))
+              
+              
+              
+              
+              #         tabPanel("tab 3", "contents"),
+              #         tabPanel("tab 4", "contents"),
+              #         tabPanel("tab 5", "contents")
+              # )       
+              
+              
+              
+              
+              
+              
+ #                                   ))
+
+
+
+
+
+              
+                                      
+#                        ))))
+
+              
+
+
+# column(4,  
+#        plotOutput("plot52")),
+# 
+# 
+# column(4,
+#        plotOutput("plot53"))
+              
+       
+              
+#              ))
+
+                       
+                       
+
+              
+
+
+server <- function(input, output) {
+                
+                
+                # Tab0 
+                
+                output$table0 <- renderTable({ 
+                  colnames(AgriIncome) = colabels1
+                  data = head(AgriIncome[,c(1:2,13)], 3)
+                  data[,2] = c("2009", "2010", "2011")
+                  data
+                }) 
+                # if (input$button == "Tables") {
+                
+                
+                output$plot0 <- renderPlot({
+                  # Use the same filtered data that the table uses
+
+                  data = AgriIncome
+                  g0 = ggplot(data, aes(factor(year), cerealYieldKgPerHectare, col = incomeGroup)) +
+                    geom_point() +
+                    # facet_grid(. ~ incomeGroup)
+                    labs(x = "Year", y = "Cereal yield (kg per hectare)") +
+                    ggtitle("Evolution of Cereal Yield (2009-2017)") +
+                    theme(plot.title = element_text(size = 15, face = "bold")) + 
+                    guides(color = guide_legend(title = "Income Group", title.position = "top")) +
+                    theme_classic()
+                  # scale_x_log10()
+                  # if (input$fit1 == TRUE) {
+                  #   g1 <- g1 + geom_smooth(method = "lm", se = FALSE)
+                  # if (input$button == "Plots") {}
+                  g0
+
+                  
+                  
+                  # ggplot(WorldIncome_ts, aes_string("year", y)) +
+                  #   geom_line() +
+                  #   facet_grid(. ~ WorldIncome_ts[[1]]) +
+                  #   ggtitle(title)
+                  # #    coord_flip() +
+                  # # stat_smooth(method = "lm")
+                  
+                                    
+                                    
+                  
+                })   
+                
+                
+
+                # Create FIRST a reactive variable named "filtered_data"
+                # Tab1  
+                filtered_data1 <- reactive({
+                  # Filter the data
+                  data1 <- AgriIncome[,c(1:14)]  # [,c(1:4, 6:9, 11, 15:19)]
+                  data1 <- subset(data1,  year >= input$years1[1] & 
+                                    year <= input$years1[2]) 
+                  # if (input$income1 != "All"){
+                  #   data1 <- subset(data1,region == input$region1)
+                  # }
+                  # colnames(data1) = colabels 
+                  data1
+                })
+                
+                # Tab2  
+                filtered_data2 <- reactive({
+                  # Filter the data
+                  data2 <- AgriRegion[,c(1:14)] # [,c(1:4, 6:9, 11, 15:19)]
+                  data2 <- subset(data2,  year >= input$years2[1] & 
+                                    year <= input$years2[2])
+                  # if (input$incomeGroup1 != "All"){
+                  #   data2 <- subset(data2, incomeGroup == input$incomeGroup1)
+                  # }
+                  # colnames(data2) = colabels 
+                  data2
+                })
+                
+              
+                output$table1 <- DT::renderDataTable({
+                  if(input$show_data1){
+                  DT::datatable(filtered_data1(), 
+                                colnames = colabels1[c(1:14)],
+                                options = list(pageLength = 10), 
+                                rownames = FALSE) # [c(1:4, 6:9, 11, 15:19)])
+                  
+                  } 
+                })
+                
+                
+                output$table2 <- DT::renderDataTable({
+                  if(input$show_data2){
+                  DT::datatable(filtered_data2(), 
+                                colnames = colabels2[c(1:14)],
+                                options = list(pageLength = 10), 
+                                rownames = FALSE) # [c(1:4, 6:9, 11, 15:19)])
+                  # , formatRound(c(2:4, 6:9, 11:13, 15:19), 1)
+                  }
+                })
+                
+
+                names(AgriIncome)               
+                
+                
+                # New plot title1
+                new_plot_title1 <- eventReactive(
+                  eventExpr = input$update_plot_title1, 
+                  valueExpr = { (input$title1) }, #toTitleCase(
+                  ignoreNULL = FALSE
+                )
+                
+                
+                # Create the plot render function  
+                output$plot1 <- renderPlot({
+                  # Use the same filtered data that the table uses
+                  data = filtered_data1()
+                  g1 = ggplot(data, aes_string(x = "year", y = input$var1, col = "incomeGroup")) + # input$var1
+                    
+                    
+                    theme_minimal() +
+                    
+                    geom_line() +
+                    labs(x = "Year", y = "") +
+                    facet_grid(~ incomeGroup, labeller = label_wrap_gen()) +
+                    
+                    # geom_line() +
+                    # labs(x = "Year", y = "") + 
+                    # facet_grid(~ incomeGroup, labeller = label_wrap_gen()) +
+                    
+                    ggtitle(new_plot_title1()) +
+                    # labs( title = isolate({input$title1}) ) +
+                  
+                    theme(axis.text.x = element_text(angle = 0,
+                                                     hjust = 1, size = 10, face = "bold")) +
+                    theme(axis.text.y = element_text(face = "bold")) +
+                    theme(plot.title = element_text(size = 15, face = "bold")) + 
+                    theme(strip.background = element_blank(),
+                          strip.text.x = element_text(size = 12, face = "bold")) +
+                    
+                    guides(color = guide_legend(title = "Income Group", title.position = "top"))
+                  # scale_x_log10()
+                  if (input$fit1 == TRUE) {
+                    g1 <- g1 + geom_smooth(method = "lm", se = FALSE)
+                  }
+                  g1
+                  
+                })
+                
+                output$description1 <- renderText({
+                  paste0("   The plot above titled '", new_plot_title1(), 
+                                   "' visualizes the evolution with time of this variable.")
+                })
+                
+                # New plot title2
+                new_plot_title2 <- eventReactive(
+                  eventExpr = input$update_plot_title2, 
+                  valueExpr = { (input$title2) }, #toTitleCase(
+                  ignoreNULL = FALSE
+                )
+                
+                # Create the plot render function  
+                output$plot2 <- renderPlot({
+                  # Use the same filtered data that the table uses
+                  data = filtered_data2()
+                  g2 = ggplot(data, aes_string(x = "year", y = input$var2, col = "worldRegion")) + # input$var2
+                    
+                   
+                    
+                    theme_minimal() +
+                    
+                    geom_line() +
+                    labs(x = "Year", y = "") +
+                    facet_grid(~ worldRegion, labeller = label_wrap_gen()) +
+                    
+                    ggtitle(new_plot_title2()) +
+                    
+                    #labs( title = isolate({input$title1}) ) +
+                  
+                    theme(axis.text.x = element_text(angle = 0,
+                                                     hjust = 1, size = 8, face = "bold")) +
+                    theme(axis.text.y = element_text(face = "bold")) +
+                    theme(plot.title = element_text(size = 12, face = "bold")) +
+                    theme(strip.background = element_blank(),
+                          strip.text.x = element_text(size = 10, face = "bold")) +
+                    
+                    guides(color = guide_legend(title = "Region", title.position = "top"))
+                  # scale_x_log10()
+                  if (input$fit2 == TRUE) {
+                    g2 <- g2 + geom_smooth(method = "lm", se = FALSE)
+                  }
+                  g2
+                    
+                })
+
+                
+                output$description2 <- renderText({
+                  paste0("   The plot above titled '", new_plot_title2(), 
+                         "' visualizes the evolution with time of this variable.")
+                })
+                
+               
+                
+                
+                # New plot title1
+                new_plot_title4 <- eventReactive(
+                  eventExpr = input$update_plot_title4, 
+                  valueExpr = { (input$title4) }, #toTitleCase(
+                  ignoreNULL = FALSE
+                )
+                
+                # Tab4  - Summary Data
+                filtered_data41 <- reactive({
+                  # Filter the data
+                  # Filter the data
+                  data41 <- AgriIncome[,c(1, 3:14)] # [,c(1:4, 6:9, 11, 15:19)]
+                  data41 <- data41 %>% # select(incomeGroup, urbanPopulationPercentOfTotal) %>% 
+                    group_by(incomeGroup) %>% 
+                    summarise_all(funs(mean(., na.rm = TRUE)))  # round(mean(, na.rm = TRUE),1))
+                              
+                              # `Average Energy Consumption` = round(mean(urbanPopulationPercentOfTotal),1),
+                              # `Average CO2-emissions` = round(mean(urbanPopulationPercentOfTotal),1))
+                  
+                  # if (input$region != "All"){
+                  #   data4 <- subset(data4,region == input$region)
+                  # }
+                  # colnames(data4) = colabels 
+                  # colnames(data41)[1] = "Income Group"
+                  data41
+                })  
+                
+                # aggregate(x = values, 
+                #           by = list(unique.values = values$value), 
+                #           FUN = length)
+                
+                
+                # output$tableX <- renderTable({ # DT::renderDataTable({
+                #   
+                #   filtered_data41()
+                #   # , 
+                #   # colnames(data)=c("Income Group", "Average"))
+                #   # data[,2] = round(data[,2],1)
+                #   # data
+                #   # DT::datatable(
+                #   #               colnames = colabels) 
+                #   
+                #   
+                # })  
+                
+                
+                # Create the plot render function  
+                output$plot41 <- renderPlot({
+                  # Use the same filtered data that the table uses
+                  data = filtered_data41()
+                  g41 = ggplot(data, aes_string(x = "incomeGroup", y = input$var4, fill = "incomeGroup")) +
+                    geom_col() +
+                    theme_minimal() +
+                 #    #      facet_wrap(~ incomeGroup) + alpha = input$alpha
+                    labs(x = "Income Group", y = "") + #Cereal yield (kg per hectare)
+                    ggtitle(new_plot_title4()) +
+                    theme(plot.title = element_text(size = 20, face = "bold")) +
+                    guides(fill = guide_legend(title = "Income Group", title.position = "top"))
+
+                 # #   labs(xlim = c(0,120000)) +
+                   # theme_bw()
+                  # scale_x_log30()
+                  # if (input$fit1 == TRUE) {
+                  #   g3 <- g3 + geom_smooth(method = "lm", se = FALSE)
+                  # }
+                  g41
+                  }) 
+
+                # forestAreaPercentOfLandArea
+                                
+                
+                # Tab4  - Summary Data
+                filtered_data42 <- reactive({
+                  # Filter the data
+                  # Filter the data
+                  data42 <- AgriRegion[,c(1, 3:14)] # [,c(1:4, 6:9, 11, 15:19)]
+                  data42 <- data42 %>% # select(worldRegion, urbanPopulationPercentOfTotal) %>% 
+                    group_by(worldRegion) %>% 
+                    summarise_all(funs(mean(., na.rm = TRUE))) # round(mean(input$var4, na.rm = TRUE),1)) # forestAreaPercentOfLandArea
+                  
+                  # `Average Energy Consumption` = round(mean(energyUsePerCapitaKgOilEq),1),
+                  # `Average CO2-emissions` = round(mean(co2EmissionsTonsPerCapita),1))
+                  
+                  # if (input$region != "All"){
+                  #   data4 <- subset(data4,region == input$region)
+                  # }
+                  # colnames(data4) = colabels 
+                  # colnames(data41)[1] = "Income Group"
+                  data42
+                })  
+                
+                
+                # Create the plot render function  
+                output$plot42 <- renderPlot({
+                  # Use the same filtered data that the table uses
+                  data = filtered_data42()
+                  g42 = ggplot(data, aes_string(x = "worldRegion", y = input$var4, fill = "worldRegion")) +
+                    geom_col() +
+                    theme_minimal() +
+                 #    #      facet_wrap(~ incomeGroup) + alpha = input$alpha
+                    labs(x = "World Region", y = "") + #Cereal yield (kg per hectare)
+                    # ggtitle(new_plot_title4) +
+                    theme(plot.title = element_text(size = 20, face = "bold")) +
+                    guides(fill = guide_legend(title = "World Region", title.position = "top")) +
+                    theme(axis.text.x = element_text(angle = 45,
+                                                     hjust = 1))  # , size = 8, face = "bold"
+                 # #   labs(xlim = c(0,120000)) +
+                    # theme_bw() +
+                  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+                 #  # if (input$fit1 == TRUE) {
+                 #  #   g3 <- g3 + geom_smooth(method = "lm", se = FALSE)
+                 #  # }
+                  g42
+                  
+                }) 
+                
+                
+                # # Tab4  - Summary Data
+                # filtered_data43 <- reactive({
+                #   # Filter the data
+                #   # Filter the data
+                #   data43 <- AgriIncome[,c(1:14)] # [,c(1:4, 6:9, 11, 15:19)]
+                #   data43 <- data43 %>% 
+                #     group_by(incomeGroup) %>% 
+                #     summarise(`Worker Productivity` = 
+                #                 round(mean(agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us,
+                #                            na.rm = T),1))
+                #   
+                #   # `Average Energy Consumption` = round(mean(energyUsePerCapitaKgOilEq),1),
+                #   # `Average CO2-emissions` = round(mean(co2EmissionsTonsPerCapita),1))
+                #   
+                #   # if (input$region != "All"){
+                #   #   data4 <- subset(data4,region == input$region)
+                #   # }
+                #   # colnames(data4) = colabels 
+                #   # colnames(data43)[1] = "Income Group"
+                #   data43
+                # })  
+                # 
+                # 
+                # # Create the plot render function  
+                # output$plot43 <- renderPlot({
+                #   # Use the same filtered data that the table uses
+                #   data = filtered_data43()
+                #   g43 = ggplot(data, aes(incomeGroup, data[[2]], fill = incomeGroup)) +
+                #     geom_col() +
+                #     #      facet_wrap(~ incomeGroup) + alpha = input$alpha
+                #     labs(x = "Income Group", y = "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)") +
+                #     ggtitle("Worker Productivity by Income Group") +
+                #     theme(plot.title = element_text(size = 30, face = "bold")) + 
+                #     guides(fill = guide_legend(title = "Income Group", title.position = "top")) +
+                #     
+                #   #  labs(xlim = c(0,120000)) +
+                #     theme_minimal()
+                #   # scale_x_log30()
+                #   # if (input$fit1 == TRUE) {
+                #   #   g3 <- g3 + geom_smooth(method = "lm", se = FALSE)
+                #   # }
+                #   g43
+                # })
+                # 
+                # 
+                # # Tab4  - Summary Data
+                # filtered_data44 <- reactive({
+                #   # Filter the data
+                #   # Filter the data
+                #   data44 <- AgriRegion[,c(1:14)] # [,c(1:4, 6:9, 11, 15:19)]
+                #   data44 <- data44 %>% 
+                #     group_by(worldRegion) %>% 
+                #     summarise(`Worker Productivity` = 
+                #                 round(mean(agricultureForestryAndFishingValueAddedPerWorkerConstant2010Us,
+                #                            na.rm = T),1))
+                #   
+                #   # `Average Energy Consumption` = round(mean(energyUsePerCapitaKgOilEq),1),
+                #   # `Average CO2-emissions` = round(mean(co2EmissionsTonsPerCapita),1))
+                #   
+                #   # if (input$region != "All"){
+                #   #   data4 <- subset(data4,region == input$region)
+                #   # }
+                #   # colnames(data4) = colabels 
+                #   # colnames(data41)[1] = "Income Group"
+                #   data44
+                # })  
+                # 
+                # 
+                # # Create the plot render function  
+                # output$plot44 <- renderPlot({
+                #   # Use the same filtered data that the table uses
+                #   data = filtered_data44()
+                #   g44 = ggplot(data, aes(worldRegion, data[[2]], fill = worldRegion)) +
+                #     geom_col() +
+                #     #      facet_wrap(~ incomeGroup) + alpha = input$alpha
+                #     labs(x = "World Region", y = "Agriculture, forestry, and fishing, value added per worker (constant 2010 US$)") +
+                #     ggtitle("Worker Productivity by World Region") +
+                #     theme(plot.title = element_text(size = 30, face = "bold")) + 
+                #     guides(fill = guide_legend(title = "World Region", title.position = "top")) +
+                #     theme(axis.text.x = element_text(angle = 45,
+                #                                      hjust = 1)) +  #, size = 8, face = "bold"
+                #     # labs(xlim = c(0,120000)) +
+                #     theme_minimal() +
+                #     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+                #   # scale_x_log30()
+                #   # if (input$fit1 == TRUE) {
+                #   #   g3 <- g3 + geom_smooth(method = "lm", se = FALSE)
+                #   # }
+                #   g44
+                #   
+                # }) 
+  
+                
+                
+                # Tab4  - Summary Data NOT WORKING
+                
+                # filtered_data51 <- reactive({
+                #   # Filter the data
+                #   # data51 <- AgriCountry
+                #   data51 <- AgriCountry %>% select(incomeGroup, input$var5) %>%
+                #     group_by(incomeGroup) %>%
+                #     summarise(Minimum = round(min(input$var5, na.rm = T),1), # input$var5
+                #               Average = round(mean(input$var5, na.rm = T),1),
+                #               Maximum = round(max(input$var5, na.rm = T),1),
+                #   `Typical Deviation` = round(sd(input$var5, na.rm = T),1))
+                #   # data51 = subset(data51, !(is.na(data51[,1])))
+                #   # if (input$region != "All"){
+                #   #   data4 <- subset(data4,region == input$region)
+                #   # }
+                #   # colnames(data4) = colabels
+                #   colnames(data51)[1] = "Income Group"
+                #   data51
+                # })
+                
+                # Tab4  - Plots
+                filtered_data52 <- reactive({
+                  # Filter the data
+                  data52 <- AgriCountry
+                  data52 <- subset(data52, !(worldRegion == "World"))
+                  
+                  if (input$region != "All Countries"){
+                    data52 <- subset(data52,  worldRegion %in% input$region)
+                    
+                    
+                  }
+                  
+                  data52
+                })
+                
+                
+
+                # # Summary Data NOT WORKING
+                # output$table5 <-  DT::renderDataTable({  # renderTable({
+                #   
+                #   DT::datatable(filtered_data51(), 
+                #                 # colnames = colabels1[c(1:14)],
+                #                 options = list(pageLength = 10), 
+                #                 rownames = FALSE) # [c(1:4, 6:9, 11, 15:19)])
+                #   
+                #   # filtered_data51()
+                # 
+                #   
+                #   
+                # })  
+                
+                
+                # New plot title1
+                new_plot_title5 <- eventReactive(
+                  eventExpr = input$update_plot_title5, 
+                  valueExpr = { (input$title5) }, #toTitleCase(
+                  ignoreNULL = FALSE
+                )
+                
+ 
+                # Create the plot render function  
+                output$plot51 <- renderPlot({
+                  # Use the same filtered data that the table uses
+                  data = filtered_data52()
+                  g51 = ggplot(data, aes_string(input$var5, fill = "incomeGroup")) +
+                    geom_density(alpha = input$alpha) + 
+                    theme_minimal() +
+                    #      facet_wrap(~ incomeGroup) +
+                    labs(x = "Log scale on different units depending on selected variable", y = "Density") + # "Log(GDP per Capita)"
+                    ggtitle(new_plot_title5()) +
+                    theme(plot.title = element_text(size = 30, face = "bold")) + 
+                    guides(fill = guide_legend(title = "Income Group", title.position = "top")) +
+                    
+                    labs(xlim = c(0,120000)) + # +
+                    
+                  scale_x_log10()
+                  # if (input$fit1 == TRUE) {
+                  #   g3 <- g3 + geom_smooth(method = "lm", se = FALSE)
+                  # }
+                  g51
+                  
+                })    
+                
+                
+                }
+
+shinyApp(ui = ui, server = server)
+
+

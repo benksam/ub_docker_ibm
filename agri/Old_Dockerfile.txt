@@ -1,0 +1,47 @@
+FROM rocker/shiny:devel
+
+RUN apt-get update -qq && apt-get -y --no-install-recommends install \
+  libxml2-dev \
+  libcairo2-dev \
+  libsqlite3-dev \
+  libmariadbd-dev \
+  libmariadb-client-lgpl-dev \
+  libpq-dev \
+  libssl-dev \
+  libcurl4-openssl-dev \
+  libssh2-1-dev \
+  unixodbc-dev \
+  && install2.r --error \
+    --deps TRUE \
+    tidyverse \
+    dplyr \
+    devtools \
+    formatR \
+    remotes \
+    selectr \
+    caTools \
+        BiocManager
+
+# Install R packages that are required
+# TODO: add further package if you need!
+RUN R -e "install.packages(c('shiny', 'janitor', 'DT', 'shinythemes'), dependencies=TRUE, repos='http://cran.rstudio.com/')"
+
+# WORKDIR /home/Docker_ShinyApp_rckr_sh_verse01
+WORKDIR /home/shiny
+
+# RUN mkdir /etc/shiny-server/
+# RUN mkdir /srv/shiny-server/
+
+# Copy configuration files into the Docker image
+COPY shiny-server.conf  /etc/shiny-server/shiny-server.conf
+# COPY /app /srv/shiny-server/sample-apps/app
+COPY /app /srv/shiny-server/app
+
+# Make the ShinyApp available at port 80
+EXPOSE 80
+
+# Copy further configuration files into the Docker image
+COPY shiny-server.sh /usr/bin/shiny-server.sh
+
+CMD ["/usr/bin/shiny-server"]
+# CMD ["R", "-e", "/srv/shiny-server/sample-apps/app"]
